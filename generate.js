@@ -15,7 +15,7 @@ import { PROCEDURES, NHS_ICB_RTT, US_STATE_WAITS } from './data.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(__dirname, 'dist');
-const SITE = 'https://treatclever.co.uk';
+const SITE = 'https://treatclever.com';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 const slug = (s) => s.toLowerCase()

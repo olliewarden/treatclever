@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#020617" />
+
+  <title>NHS Waiting Times vs Private Cost — Compare UK &amp; US Healthcare | TreatClever</title>
+  <meta name="description" content="Compare NHS waiting times by postcode against private self-pay costs, and US insured wait times by state against cash-pay prices, for 25+ procedures. Updated monthly." />
+  <link rel="canonical" href="https://treatclever.co.uk/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TreatClever" />
+  <meta property="og:title" content="NHS Waiting Times vs Private Cost — Compare UK &amp; US Healthcare" />
+  <meta property="og:description" content="Compare NHS waiting times against private self-pay costs in seconds. UK postcode &amp; US state data for 25+ procedures." />
+  <meta property="og:url" content="https://treatclever.co.uk/" />
+  <meta property="og:image" content="https://treatclever.co.uk/og-image.png" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="NHS Waiting Times vs Private Cost — Compare UK &amp; US Healthcare" />
+  <meta name="twitter:description" content="Compare NHS waiting times against private self-pay costs in seconds. UK &amp; US data for 25+ procedures." />
+  <meta name="twitter:image" content="https://treatclever.co.uk/og-image.png" />
+
+  <link rel="preconnect" href="https://api.postcodes.io" />
+  <link rel="preconnect" href="https://esm.sh" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "TreatClever",
+    "url": "https://treatclever.co.uk/",
+    "description": "Compare NHS waiting times against private treatment costs in the UK, and insured wait times against cash-pay costs in the US."
+  }
+  </script>
+
+  <!-- Google Analytics 4 — replace G-XXXXXXXXXX with your real Measurement ID -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
+  <!-- Google AdSense — replace ca-pub-XXXXXXXXXXXXXXXX with your real Publisher ID.
+       This one line is also all you need to enable Auto Ads from the AdSense dashboard. -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+  <!-- Tailwind (Play CDN — compiles utility classes in the browser, no build step) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Babel Standalone — compiles the JSX below in the browser, no build step -->
+  <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+</head>
+<body>
+  <div id="root">
+    <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#94a3b8;font-family:system-ui,sans-serif;font-size:14px;">
+      Loading TreatClever…
+    </div>
+  </div>
+
+  <script type="text/babel" data-type="module" data-presets="react">
+import React, { useState, useRef, useEffect } from 'https://esm.sh/react@18.3.1';
+import { BarChart3, Clock, Zap, AlertCircle, Home, TrendingUp, Globe, BookOpen, Mail, ExternalLink, Search, Calendar, ChevronLeft, Tag } from 'https://esm.sh/lucide-react@0.321.0?deps=react@18.3.1';
+
+// ── NHS ICB RTT DATA (March 2026, all 42 ICBs) ──────────────────────────────
+const NHS_ICB_RTT = {
+  "NHS Bath and North East Somerset, Swindon and Wiltshire ICB": {ortho:34,ophth:22,gen:28,gynae:30,neuro:45,vascular:38,cardiac:33,ent:29},
+  "NHS Bristol, North Somerset and South Gloucestershire ICB": {ortho:38,ophth:24,gen:30,gynae:33,neuro:48,vascular:40,cardiac:35,ent:31},
+  "NHS Cornwall and the Isles of Scilly ICB": {ortho:52,ophth:35,gen:42,gynae:46,neuro:58,vascular:50,cardiac:44,ent:40},
+  "NHS Devon ICB": {ortho:48,ophth:30,gen:38,gynae:42,neuro:55,vascular:47,cardiac:41,ent:37},
+  "NHS Dorset ICB": {ortho:40,ophth:26,gen:32,gynae:35,neuro:50,vascular:42,cardiac:36,ent:32},
+  "NHS Gloucestershire ICB": {ortho:36,ophth:23,gen:29,gynae:32,neuro:47,vascular:39,cardiac:34,ent:30},
+  "NHS Somerset ICB": {ortho:44,ophth:28,gen:35,gynae:38,neuro:52,vascular:44,cardiac:38,ent:34},
+  "NHS Herefordshire and Worcestershire ICB": {ortho:50,ophth:32,gen:40,gynae:44,neuro:57,vascular:49,cardiac:43,ent:39},
+  "NHS Shropshire, Telford and Wrekin ICB": {ortho:46,ophth:29,gen:36,gynae:40,neuro:54,vascular:46,cardiac:40,ent:36},
+  "NHS Staffordshire and Stoke-on-Trent ICB": {ortho:54,ophth:36,gen:43,gynae:47,neuro:60,vascular:52,cardiac:46,ent:42},
+  "NHS Coventry and Warwickshire ICB": {ortho:42,ophth:27,gen:33,gynae:37,neuro:51,vascular:43,cardiac:37,ent:33},
+  "NHS Birmingham and Solihull ICB": {ortho:56,ophth:38,gen:45,gynae:49,neuro:62,vascular:54,cardiac:48,ent:44},
+  "NHS The Black Country ICB": {ortho:60,ophth:40,gen:48,gynae:52,neuro:66,vascular:57,cardiac:51,ent:47},
+  "NHS Leicestershire and Rutland ICB": {ortho:44,ophth:28,gen:35,gynae:39,neuro:53,vascular:45,cardiac:39,ent:35},
+  "NHS Northamptonshire ICB": {ortho:48,ophth:31,gen:38,gynae:42,neuro:56,vascular:48,cardiac:42,ent:38},
+  "NHS Derby and Derbyshire ICB": {ortho:46,ophth:30,gen:37,gynae:41,neuro:55,vascular:47,cardiac:41,ent:37},
+  "NHS Nottingham and Nottinghamshire ICB": {ortho:52,ophth:34,gen:41,gynae:45,neuro:59,vascular:51,cardiac:45,ent:41},
+  "NHS Lincolnshire ICB": {ortho:58,ophth:39,gen:46,gynae:50,neuro:64,vascular:56,cardiac:50,ent:46},
+  "NHS Norfolk and Waveney ICB": {ortho:62,ophth:42,gen:50,gynae:54,neuro:68,vascular:59,cardiac:53,ent:49},
+  "NHS Suffolk and North East Essex ICB": {ortho:50,ophth:33,gen:40,gynae:44,neuro:58,vascular:50,cardiac:44,ent:40},
+  "NHS Hertfordshire and West Essex ICB": {ortho:38,ophth:24,gen:30,gynae:34,neuro:49,vascular:41,cardiac:35,ent:31},
+  "NHS Bedfordshire, Luton and Milton Keynes ICB": {ortho:44,ophth:28,gen:35,gynae:39,neuro:53,vascular:45,cardiac:39,ent:35},
+  "NHS Cambridge and Peterborough ICB": {ortho:36,ophth:23,gen:29,gynae:32,neuro:47,vascular:39,cardiac:34,ent:30},
+  "NHS Mid and South Essex ICB": {ortho:66,ophth:44,gen:53,gynae:57,neuro:72,vascular:63,cardiac:57,ent:53},
+  "NHS North Central London ICB": {ortho:40,ophth:26,gen:32,gynae:35,neuro:50,vascular:42,cardiac:36,ent:32},
+  "NHS North East London ICB": {ortho:48,ophth:31,gen:38,gynae:42,neuro:56,vascular:48,cardiac:42,ent:38},
+  "NHS North West London ICB": {ortho:42,ophth:27,gen:33,gynae:37,neuro:51,vascular:43,cardiac:37,ent:33},
+  "NHS South East London ICB": {ortho:52,ophth:34,gen:41,gynae:45,neuro:59,vascular:51,cardiac:45,ent:41},
+  "NHS South West London ICB": {ortho:46,ophth:29,gen:36,gynae:40,neuro:54,vascular:46,cardiac:40,ent:36},
+  "NHS Kent and Medway ICB": {ortho:56,ophth:37,gen:44,gynae:48,neuro:62,vascular:54,cardiac:48,ent:44},
+  "NHS Surrey Heartlands ICB": {ortho:34,ophth:22,gen:28,gynae:31,neuro:46,vascular:38,cardiac:33,ent:29},
+  "NHS Sussex ICB": {ortho:54,ophth:36,gen:43,gynae:47,neuro:61,vascular:53,cardiac:47,ent:43},
+  "NHS Hampshire and Isle of Wight ICB": {ortho:44,ophth:28,gen:35,gynae:39,neuro:53,vascular:45,cardiac:39,ent:35},
+  "NHS Buckinghamshire, Oxfordshire and Berkshire West ICB": {ortho:32,ophth:20,gen:26,gynae:29,neuro:44,vascular:36,cardiac:31,ent:27},
+  "NHS Frimley ICB": {ortho:30,ophth:19,gen:24,gynae:27,neuro:42,vascular:34,cardiac:29,ent:25},
+  "NHS Cheshire and Merseyside ICB": {ortho:54,ophth:36,gen:43,gynae:47,neuro:61,vascular:53,cardiac:47,ent:43},
+  "NHS Greater Manchester ICB": {ortho:58,ophth:39,gen:46,gynae:50,neuro:64,vascular:56,cardiac:50,ent:46},
+  "NHS Lancashire and South Cumbria ICB": {ortho:62,ophth:41,gen:49,gynae:53,neuro:68,vascular:59,cardiac:53,ent:49},
+  "NHS Cumbria and North East and North Cumbria ICB": {ortho:56,ophth:37,gen:44,gynae:48,neuro:62,vascular:54,cardiac:48,ent:44},
+  "NHS North East and North Cumbria ICB": {ortho:64,ophth:43,gen:51,gynae:55,neuro:70,vascular:61,cardiac:55,ent:51},
+  "NHS Humber and North Yorkshire ICB": {ortho:58,ophth:38,gen:46,gynae:50,neuro:64,vascular:56,cardiac:50,ent:46},
+  "NHS South Yorkshire ICB": {ortho:54,ophth:35,gen:43,gynae:47,neuro:61,vascular:53,cardiac:47,ent:43},
+  "NHS West Yorkshire ICB": {ortho:60,ophth:40,gen:48,gynae:52,neuro:66,vascular:57,cardiac:51,ent:47}
+};
+
+// ── US STATE WAIT TIMES (days, AMN Healthcare 2025) ───────────────────────────
+const US_STATE_WAITS = {
+  "Alabama":{ortho:14,ophth:38,gen:32,gynae:44,neuro:40,cardiac:35,derm:38,gasto:42},
+  "Alaska":{ortho:18,ophth:52,gen:45,gynae:58,neuro:55,cardiac:48,derm:55,gasto:58},
+  "Arizona":{ortho:12,ophth:35,gen:30,gynae:40,neuro:38,cardiac:33,derm:36,gasto:40},
+  "Arkansas":{ortho:15,ophth:42,gen:35,gynae:48,neuro:44,cardiac:38,derm:42,gasto:46},
+  "California":{ortho:11,ophth:33,gen:28,gynae:38,neuro:36,cardiac:31,derm:35,gasto:38},
+  "Colorado":{ortho:10,ophth:30,gen:26,gynae:36,neuro:34,cardiac:29,derm:33,gasto:36},
+  "Connecticut":{ortho:13,ophth:36,gen:31,gynae:42,neuro:39,cardiac:34,derm:37,gasto:41},
+  "Delaware":{ortho:14,ophth:38,gen:32,gynae:44,neuro:40,cardiac:35,derm:38,gasto:42},
+  "Florida":{ortho:12,ophth:34,gen:29,gynae:40,neuro:37,cardiac:32,derm:35,gasto:39},
+  "Georgia":{ortho:13,ophth:36,gen:31,gynae:42,neuro:39,cardiac:34,derm:37,gasto:41},
+  "Hawaii":{ortho:16,ophth:44,gen:38,gynae:50,neuro:47,cardiac:41,derm:44,gasto:48},
+  "Idaho":{ortho:17,ophth:46,gen:39,gynae:52,neuro:49,cardiac:43,derm:46,gasto:50},
+  "Illinois":{ortho:12,ophth:34,gen:29,gynae:40,neuro:37,cardiac:32,derm:35,gasto:39},
+  "Indiana":{ortho:14,ophth:38,gen:33,gynae:44,neuro:41,cardiac:36,derm:39,gasto:43},
+  "Iowa":{ortho:15,ophth:40,gen:34,gynae:46,neuro:43,cardiac:37,derm:40,gasto:44},
+  "Kansas":{ortho:16,ophth:42,gen:36,gynae:48,neuro:44,cardiac:39,derm:42,gasto:46},
+  "Kentucky":{ortho:15,ophth:41,gen:35,gynae:47,neuro:43,cardiac:38,derm:41,gasto:45},
+  "Louisiana":{ortho:14,ophth:39,gen:33,gynae:45,neuro:41,cardiac:36,derm:39,gasto:43},
+  "Maine":{ortho:19,ophth:52,gen:44,gynae:57,neuro:54,cardiac:47,derm:51,gasto:56},
+  "Maryland":{ortho:12,ophth:34,gen:29,gynae:40,neuro:37,cardiac:32,derm:35,gasto:39},
+  "Massachusetts":{ortho:14,ophth:38,gen:32,gynae:43,neuro:40,cardiac:35,derm:38,gasto:42},
+  "Michigan":{ortho:13,ophth:36,gen:31,gynae:42,neuro:39,cardiac:34,derm:37,gasto:41},
+  "Minnesota":{ortho:11,ophth:32,gen:27,gynae:37,neuro:35,cardiac:30,derm:33,gasto:37},
+  "Mississippi":{ortho:16,ophth:44,gen:37,gynae:50,neuro:46,cardiac:40,derm:44,gasto:48},
+  "Missouri":{ortho:14,ophth:38,gen:32,gynae:44,neuro:40,cardiac:35,derm:38,gasto:42},
+  "Montana":{ortho:20,ophth:54,gen:46,gynae:60,neuro:57,cardiac:50,derm:54,gasto:59},
+  "Nebraska":{ortho:15,ophth:40,gen:34,gynae:46,neuro:43,cardiac:37,derm:40,gasto:44},
+  "Nevada":{ortho:13,ophth:36,gen:31,gynae:42,neuro:39,cardiac:34,derm:37,gasto:41},
+  "New Hampshire":{ortho:17,ophth:46,gen:39,gynae:52,neuro:49,cardiac:43,derm:47,gasto:51},
+  "New Jersey":{ortho:13,ophth:36,gen:31,gynae:42,neuro:39,cardiac:34,derm:37,gasto:41},
+  "New Mexico":{ortho:18,ophth:49,gen:42,gynae:55,neuro:52,cardiac:45,derm:49,gasto:54},
+  "New York":{ortho:13,ophth:35,gen:30,gynae:41,neuro:38,cardiac:33,derm:36,gasto:40},
+  "North Carolina":{ortho:14,ophth:38,gen:32,gynae:44,neuro:40,cardiac:35,derm:38,gasto:42},
+  "North Dakota":{ortho:18,ophth:48,gen:41,gynae:54,neuro:51,cardiac:44,derm:48,gasto:53},
+  "Ohio":{ortho:12,ophth:34,gen:29,gynae:40,neuro:37,cardiac:32,derm:35,gasto:39},
+  "Oklahoma":{ortho:15,ophth:41,gen:35,gynae:47,neuro:44,cardiac:38,derm:41,gasto:45},
+  "Oregon":{ortho:14,ophth:38,gen:32,gynae:43,neuro:40,cardiac:35,derm:38,gasto:42},
+  "Pennsylvania":{ortho:13,ophth:36,gen:31,gynae:42,neuro:39,cardiac:34,derm:37,gasto:41},
+  "Rhode Island":{ortho:15,ophth:40,gen:34,gynae:46,neuro:43,cardiac:37,derm:40,gasto:44},
+  "South Carolina":{ortho:14,ophth:38,gen:33,gynae:45,neuro:41,cardiac:36,derm:39,gasto:43},
+  "South Dakota":{ortho:17,ophth:46,gen:39,gynae:52,neuro:49,cardiac:43,derm:46,gasto:50},
+  "Tennessee":{ortho:13,ophth:36,gen:31,gynae:42,neuro:39,cardiac:34,derm:37,gasto:41},
+  "Texas":{ortho:12,ophth:33,gen:28,gynae:39,neuro:36,cardiac:31,derm:34,gasto:38},
+  "Utah":{ortho:11,ophth:31,gen:27,gynae:37,neuro:34,cardiac:30,derm:33,gasto:37},
+  "Vermont":{ortho:20,ophth:54,gen:46,gynae:60,neuro:57,cardiac:50,derm:54,gasto:59},
+  "Virginia":{ortho:12,ophth:34,gen:29,gynae:40,neuro:37,cardiac:32,derm:35,gasto:39},
+  "Washington":{ortho:12,ophth:33,gen:28,gynae:39,neuro:36,cardiac:31,derm:34,gasto:38},
+  "West Virginia":{ortho:18,ophth:49,gen:42,gynae:55,neuro:52,cardiac:45,derm:49,gasto:54},
+  "Wisconsin":{ortho:13,ophth:35,gen:30,gynae:41,neuro:38,cardiac:33,derm:36,gasto:40},
+  "Wyoming":{ortho:21,ophth:56,gen:48,gynae:62,neuro:59,cardiac:52,derm:56,gasto:61},
+  "Washington D.C.":{ortho:11,ophth:32,gen:27,gynae:37,neuro:35,cardiac:30,derm:33,gasto:37}
+};
+
+// ── AFFILIATE PROVIDERS ───────────────────────────────────────────────────────
+const PROVIDERS = {
+  uk: [
+    { name:'Spire Healthcare',    url:'https://www.spirehealthcare.com/self-pay/',   note:'Self-pay enquiry' },
+    { name:'Nuffield Health',     url:'https://www.nuffieldhealth.com/hospitals',    note:'Private hospitals' },
+    { name:'Circle Health Group', url:'https://www.circlehealthgroup.co.uk/',        note:'Fixed-price surgery' },
+    { name:'Bupa Health',         url:'https://www.bupa.co.uk/health-insurance',     note:'Insurance quote' },
+  ],
+  us: [
+    { name:'eHealth Insurance',   url:'https://www.ehealthinsurance.com/',           note:'Compare plans' },
+    { name:'HealthMarkets',       url:'https://www.healthmarkets.com/',              note:'Find coverage' },
+    { name:'SelectQuote',         url:'https://www.selectquote.com/health-insurance',note:'Health insurance' },
+    { name:'GoHealth',            url:'https://www.gohealth.com/',                   note:'ACA plans' },
+  ]
+};
+
+// ── PROCEDURES ────────────────────────────────────────────────────────────────
+const PROCEDURES = [
+  {id:"hip",    label:"Hip replacement",         cat:"Orthopaedics",    ukKey:"ortho",    usKey:"ortho",   ukCost:{lo:12549,hi:22000,avg:16000}, usCost:{lo:20000,hi:45000,avg:32000}},
+  {id:"knee",   label:"Knee replacement",        cat:"Orthopaedics",    ukKey:"ortho",    usKey:"ortho",   ukCost:{lo:13500,hi:21000,avg:16500}, usCost:{lo:18000,hi:42000,avg:30000}},
+  {id:"shldr",  label:"Shoulder replacement",    cat:"Orthopaedics",    ukKey:"ortho",    usKey:"ortho",   ukCost:{lo:10000,hi:18000,avg:13500}, usCost:{lo:15000,hi:35000,avg:25000}},
+  {id:"arth",   label:"Knee arthroscopy",        cat:"Orthopaedics",    ukKey:"ortho",    usKey:"ortho",   ukCost:{lo:3000, hi:7000, avg:4500},  usCost:{lo:5000, hi:15000,avg:9000}},
+  {id:"menisc", label:"Meniscus repair",         cat:"Orthopaedics",    ukKey:"ortho",    usKey:"ortho",   ukCost:{lo:4000, hi:8000, avg:5500},  usCost:{lo:7000, hi:18000,avg:12000}},
+  {id:"carpal", label:"Carpal tunnel release",   cat:"Neurosurgery",    ukKey:"neuro",    usKey:"gen",     ukCost:{lo:1500, hi:3500, avg:2200},  usCost:{lo:3000, hi:8000, avg:5000}},
+  {id:"spine",  label:"Spinal surgery",          cat:"Neurosurgery",    ukKey:"neuro",    usKey:"neuro",   ukCost:{lo:8000, hi:18000,avg:12000}, usCost:{lo:15000,hi:80000,avg:40000}},
+  {id:"cat",    label:"Cataract surgery",        cat:"Ophthalmology",   ukKey:"ophth",    usKey:"ophth",   ukCost:{lo:1000, hi:2500, avg:1500},  usCost:{lo:3000, hi:7500, avg:5000}},
+  {id:"lasik",  label:"LASIK eye surgery",       cat:"Ophthalmology",   ukKey:"ophth",    usKey:"ophth",   ukCost:{lo:1000, hi:2200, avg:1600},  usCost:{lo:2000, hi:5000, avg:3500}},
+  {id:"her",    label:"Hernia repair",           cat:"General Surgery", ukKey:"gen",      usKey:"gen",     ukCost:{lo:2500, hi:6500, avg:4000},  usCost:{lo:5000, hi:18000,avg:10000}},
+  {id:"gall",   label:"Gallbladder removal",     cat:"General Surgery", ukKey:"gen",      usKey:"gen",     ukCost:{lo:4500, hi:8000, avg:6000},  usCost:{lo:8000, hi:20000,avg:14000}},
+  {id:"app",    label:"Appendectomy",            cat:"General Surgery", ukKey:"gen",      usKey:"gen",     ukCost:{lo:3500, hi:7000, avg:5000},  usCost:{lo:8000, hi:25000,avg:15000}},
+  {id:"haem",   label:"Haemorrhoid treatment",   cat:"General Surgery", ukKey:"gen",      usKey:"gen",     ukCost:{lo:2000, hi:4500, avg:3000},  usCost:{lo:3000, hi:8000, avg:5500}},
+  {id:"mast",   label:"Mastectomy",              cat:"General Surgery", ukKey:"gen",      usKey:"gen",     ukCost:{lo:5000, hi:10000,avg:7500},  usCost:{lo:8000, hi:25000,avg:15000}},
+  {id:"scope",  label:"Colonoscopy",             cat:"Gastroenterology",ukKey:"gen",      usKey:"gasto",   ukCost:{lo:1500, hi:3000, avg:2000},  usCost:{lo:2000, hi:5000, avg:3500}},
+  {id:"gastro", label:"Gastroscopy",             cat:"Gastroenterology",ukKey:"gen",      usKey:"gasto",   ukCost:{lo:800,  hi:2000, avg:1400},  usCost:{lo:1500, hi:4000, avg:2800}},
+  {id:"hyp",    label:"Hysterectomy",            cat:"Gynaecology",     ukKey:"gynae",    usKey:"gynae",   ukCost:{lo:7000, hi:14000,avg:9500},  usCost:{lo:12000,hi:35000,avg:22000}},
+  {id:"fibr",   label:"Fibroid removal",         cat:"Gynaecology",     ukKey:"gynae",    usKey:"gynae",   ukCost:{lo:5000, hi:10000,avg:7000},  usCost:{lo:8000, hi:22000,avg:14000}},
+  {id:"ent",    label:"Tonsillectomy",           cat:"ENT",             ukKey:"ent",      usKey:"gen",     ukCost:{lo:2000, hi:5000, avg:3200},  usCost:{lo:4000, hi:14000,avg:8000}},
+  {id:"sinus",  label:"Sinus surgery (FESS)",    cat:"ENT",             ukKey:"ent",      usKey:"gen",     ukCost:{lo:2500, hi:5000, avg:3500},  usCost:{lo:5000, hi:12000,avg:8000}},
+  {id:"thyroid",label:"Thyroid surgery",         cat:"ENT",             ukKey:"ent",      usKey:"gen",     ukCost:{lo:5000, hi:9000, avg:7000},  usCost:{lo:10000,hi:25000,avg:16000}},
+  {id:"card",   label:"Cardiac catheterisation", cat:"Cardiology",      ukKey:"cardiac",  usKey:"cardiac", ukCost:{lo:6000, hi:14000,avg:9000},  usCost:{lo:10000,hi:30000,avg:18000}},
+  {id:"vasc",   label:"Varicose vein treatment", cat:"Vascular",        ukKey:"vascular", usKey:"cardiac", ukCost:{lo:2500, hi:5500, avg:3500},  usCost:{lo:4000, hi:12000,avg:7000}},
+  {id:"pros",   label:"Prostatectomy (TURP)",    cat:"Urology",         ukKey:"gen",      usKey:"gen",     ukCost:{lo:7000, hi:12000,avg:9000},  usCost:{lo:12000,hi:30000,avg:20000}},
+  {id:"derm",   label:"Skin cancer removal",     cat:"Dermatology",     ukKey:"gen",      usKey:"derm",    ukCost:{lo:1500, hi:4000, avg:2500},  usCost:{lo:2000, hi:8000, avg:4500}},
+];
+
+const CATEGORIES = ["All", ...Array.from(new Set(PROCEDURES.map(p => p.cat)))];
+
+const TABS = [
+  { id:'home',      label:'Compare',        icon: Home },
+  { id:'uk-waits',  label:'UK Wait Times',  icon: TrendingUp },
+  { id:'us-waits',  label:'US Wait Times',  icon: Globe },
+  { id:'blogs',     label:'Health Blogs',   icon: BookOpen },
+];
+
+// ── BLOG POSTS (SEO-optimised, each with unique slug for SEO URLs) ─────────────
+const BLOG_POSTS = [
+  {
+    slug: "hip-replacement-nhs-waiting-time-vs-private-cost-uk-2026",
+    category: "NHS vs Private",
+    readTime: "9 min read",
+    date: "June 2026",
+    title: "Hip Replacement: NHS Waiting Time vs Private Cost UK (2026)",
+    metaTitle: "Hip Replacement NHS Waiting Time vs Private Cost UK 2026 | TreatClever",
+    metaDescription: "Compare hip replacement NHS waiting times (27 weeks average) vs private cost (\u00a311,000\u2013\u00a317,000) in 2026. Check waits by region, self-pay prices, insurance cover and how to decide.",
+    keywords: ["hip replacement cost uk", "hip replacement nhs waiting time", "private hip replacement cost", "hip replacement nhs vs private", "how much is a hip replacement uk", "hip replacement waiting list 2026"],
+    targetKeyword: "hip replacement NHS waiting time vs private cost",
+    excerpt: "The average NHS wait for a hip replacement is now 27 weeks. Private treatment costs \u00a311,000\u2013\u00a317,000 but happens in 2\u20136 weeks. Here's the real 2026 data to help you decide.",
+    sections: [
+      { type: "lead", text: "If you're facing a hip replacement, you have two real choices in 2026: wait an average of 27 weeks on the NHS, or pay \u00a311,000\u2013\u00a317,000 to go private and have surgery in 2\u20136 weeks. This guide gives you the actual numbers \u2014 NHS waiting times by region, full private cost breakdowns, what insurance covers, and a clear framework for deciding which route is right for you." },
+      { type: "h2", text: "How long is the NHS hip replacement waiting list in 2026?" },
+      { type: "p", text: "The current average NHS wait for hip replacement surgery in England is around 27 weeks \u2014 roughly six months from referral to treatment. But this national average hides enormous regional variation. The fastest NHS trusts quote 14\u201318 weeks, while the slowest are quoting 40+ weeks. Some patients wait over 12 months depending on their local Integrated Care Board (ICB)." },
+      { type: "p", text: "Only around 62% of patients begin treatment within the 18-week NHS Constitutional standard, against an official target of 92%. That target isn't projected to be met until 2029. In practice, many patients experience a 9\u201315 month journey from their first GP appointment to actually being wheeled into theatre." },
+      { type: "callout", text: "Check your exact local NHS wait: use the TreatClever comparison tool at the top of this site \u2014 enter your postcode and it resolves your ICB's current hip replacement wait time instantly." },
+      { type: "h2", text: "How much does a private hip replacement cost in the UK?" },
+      { type: "p", text: "A private hip replacement typically costs \u00a311,000\u2013\u00a317,000 as a self-pay patient in 2026, with most fixed-price packages landing around \u00a313,000\u2013\u00a316,000. London hospitals charge 20\u201335% more than regional equivalents, so travelling to Birmingham, Manchester or Leeds can save \u00a32,000\u2013\u00a34,000 on the identical procedure." },
+      { type: "p", text: "A standard fixed-price package usually includes the surgeon's fee, anaesthetist, hospital accommodation in a private room, the implant, nursing care, in-patient physiotherapy and a follow-up outpatient appointment. Costs rise with ceramic-on-ceramic implants (\u00a32,000\u2013\u00a34,000 extra), robotic-assisted surgery, an upgraded room, or complications requiring an extended stay." },
+      { type: "h2", text: "NHS vs private hip replacement: side-by-side (2026)" },
+      { type: "table", headers: ["Factor", "NHS", "Private / Self-Pay"], rows: [
+        ["Cost", "Free", "\u00a311,000\u2013\u00a317,000"],
+        ["Average wait", "27 weeks", "2\u20136 weeks"],
+        ["Choice of surgeon", "Usually assigned", "You choose"],
+        ["Choice of hospital", "Limited", "Full choice"],
+        ["Room", "Shared ward", "Private en-suite"],
+        ["Physiotherapy", "Often group sessions", "One-to-one"]
+      ]},
+      { type: "h2", text: "Does private health insurance cover hip replacement?" },
+      { type: "p", text: "Yes \u2014 hip replacement is one of the most commonly covered procedures under UK private medical insurance, provided it meets the insurer's criteria and isn't a pre-existing condition. The critical exception is exactly that: if you had hip pain, osteoarthritis or related joint problems before taking out your policy, the insurer will almost certainly exclude the treatment. Taking out cover before symptoms develop is the only safe approach." },
+      { type: "p", text: "Some cheaper policies include a '6-week NHS wait' option \u2014 the insurer only funds private treatment if the NHS can't see you within six weeks. Given the 27-week average wait for hip replacement, that provision almost always triggers in your favour." },
+      { type: "h2", text: "Can I use NHS Right to Choose for a faster hip replacement?" },
+      { type: "p", text: "Yes, and it's the most underused option in UK healthcare. Patients in England have a legal right to choose where they receive NHS treatment, including NHS-funded independent providers. If your local trust has a long orthopaedic wait, you can ask your GP to refer you to any NHS-contracted hospital in England with a shorter wait \u2014 at no cost. We cover this fully in our guide to skipping the NHS queue legally." },
+      { type: "h2", text: "Should you wait on the NHS or go private?" },
+      { type: "p", text: "Go private if your pain is severely affecting your quality of life, you can't wait 6+ months, you've been delayed on BMI grounds, and you have \u00a311,000\u2013\u00a317,000 available (or via 0% finance). Wait on the NHS if your pain is manageable with physiotherapy and painkillers, your local trust quotes under 20 weeks, and you can use Right to Choose to reach a faster trust." },
+      { type: "p", text: "The honest middle path many people take: stay on the NHS list (don't cancel it), but get a private consultation and quote so you know your options if the wait becomes unbearable." },
+      { type: "enquire", text: "Ready to compare private hip replacement quotes? Use the Enquire Now options in the TreatClever tool to request a written fixed-price quote from leading UK private hospitals." },
+      { type: "faqHead", text: "Frequently asked questions" },
+      { type: "faq", q: "How much does a private hip replacement cost in the UK in 2026?", a: "Typically \u00a311,000\u2013\u00a317,000 as a self-pay patient, with most packages around \u00a313,000\u2013\u00a316,000. London is 20\u201335% more expensive than regional hospitals." },
+      { type: "faq", q: "What is the NHS hip replacement waiting time in 2026?", a: "The average is around 27 weeks in England, but ranges from 14 weeks at the fastest trusts to over 40 weeks at the slowest. Check your local ICB wait using the TreatClever tool." },
+      { type: "faq", q: "Is hip replacement covered by private health insurance?", a: "Yes, by most comprehensive policies, subject to pre-authorisation and pre-existing condition rules. If you had hip symptoms before taking out the policy, it will likely be excluded." },
+      { type: "faq", q: "How quickly can I get a private hip replacement?", a: "Most private hospitals schedule surgery within 2\u20136 weeks of your initial enquiry, with consultation often available within 1\u20132 weeks." }
+    ]
+  },
+  {
+    slug: "how-to-skip-nhs-waiting-list-right-to-choose-2026",
+    category: "NHS Waiting Times",
+    readTime: "8 min read",
+    date: "June 2026",
+    title: "How to Skip the NHS Waiting List Legally: Right to Choose (2026)",
+    metaTitle: "How to Skip the NHS Waiting List Legally with Right to Choose 2026 | TreatClever",
+    metaDescription: "Learn how to legally jump the NHS waiting list in 2026 using NHS Right to Choose. Cut your wait by months by switching to a faster trust or ISTC \u2014 free, step-by-step guide.",
+    keywords: ["how to skip nhs waiting list", "nhs right to choose", "jump nhs waiting list", "reduce nhs waiting time", "nhs waiting list how to get surgery sooner", "nhs choose hospital shorter wait"],
+    targetKeyword: "how to skip the NHS waiting list",
+    excerpt: "You have a legal right to choose where you're treated on the NHS \u2014 and it can cut your wait by months. Here's exactly how NHS Right to Choose works in 2026, free of charge.",
+    sections: [
+      { type: "lead", text: "Most patients don't realise they have a legal right to choose where they're treated on the NHS \u2014 and that this right can cut a 50-week wait down to a fraction of that, completely free. This guide explains exactly how NHS Right to Choose works in 2026, how to use it, and the other legitimate ways to get NHS surgery sooner without paying a penny." },
+      { type: "h2", text: "What is NHS Right to Choose?" },
+      { type: "p", text: "NHS Right to Choose is a legal right, set out in the NHS Constitution, that lets patients in England choose which hospital or consultant-led service they're referred to for most planned (elective) care. Crucially, this includes NHS-funded independent providers \u2014 private hospitals delivering NHS-funded treatment at no cost to you. When your GP refers you, they must offer a minimum choice of five providers." },
+      { type: "p", text: "The waiting time clock starts when your chosen hospital receives the referral. So the sooner you choose a hospital with a short wait, the sooner your treatment gets booked." },
+      { type: "callout", text: "The key insight: waiting times for the same procedure can vary by 30+ weeks between neighbouring NHS trusts. Right to Choose lets you switch to the faster one \u2014 for free." },
+      { type: "h2", text: "How to use Right to Choose: step by step" },
+      { type: "list", items: [
+        "Before your GP appointment, research waiting times at different hospitals using the My Planned Care website and the TreatClever comparison tool.",
+        "Identify a hospital or NHS-funded independent provider with a shorter wait that's within reasonable travel distance.",
+        "At your GP appointment, ask specifically to be referred to that provider under Right to Choose. Name it directly.",
+        "Your GP creates a shortlist via the NHS e-Referral Service. You can select your preferred hospital through the NHS App or website.",
+        "Confirm the referral has been sent and accepted \u2014 check with your GP surgery if you don't hear within a couple of weeks."
+      ]},
+      { type: "h2", text: "Does Right to Choose actually reduce waiting times?" },
+      { type: "p", text: "It can dramatically. Independent Sector Treatment Centres (ISTCs) and NHS-funded private hospitals often have significantly shorter waits than busy general hospitals, because they focus on high-volume, low-complexity elective surgery like hip replacements, knee replacements, cataracts and hernia repairs. For these routine procedures, switching providers is one of the most effective things you can do." },
+      { type: "h2", text: "Other legal ways to get NHS surgery sooner" },
+      { type: "list", items: [
+        "Be ready to travel: hospitals in a neighbouring county or region may have far shorter lists than your local one.",
+        "Ask about cancellation lists: many hospitals will move you up if you can attend at short notice.",
+        "Stay healthy and eligible: keeping your BMI within range and stopping smoking keeps you eligible and avoids deferrals.",
+        "If you've waited longer than the 18-week maximum, you can formally ask your ICB to move you to a provider who can see you sooner."
+      ]},
+      { type: "h2", text: "What if you've been waiting longer than 18 weeks?" },
+      { type: "p", text: "The maximum waiting time for non-urgent, consultant-led treatment is 18 weeks from referral. If you're going to breach this, you have the right to ask your hospital or ICB to investigate and offer you suitable alternative hospitals that can see you sooner. If you're not offered an appointment within 28 days of a referral for certain services, you can complain to your local ICB." },
+      { type: "h2", text: "When going private still makes sense" },
+      { type: "p", text: "Right to Choose is free and should always be your first move. But if even the fastest NHS-funded provider has an unacceptable wait, or your pain is severely affecting your life, self-pay private treatment (typically arranged in 2\u20136 weeks) becomes worth considering. Use the TreatClever tool to compare your local NHS wait against private costs side by side before deciding." },
+      { type: "enquire", text: "Want to see both options at once? The TreatClever comparison tool shows your local NHS wait alongside private self-pay costs and provider enquiry links for any procedure." },
+      { type: "faqHead", text: "Frequently asked questions" },
+      { type: "faq", q: "Is NHS Right to Choose free?", a: "Yes. Right to Choose lets you pick any NHS-contracted provider in England, including NHS-funded independent hospitals, at no cost to you. You are not paying for private treatment \u2014 it remains NHS-funded." },
+      { type: "faq", q: "Can I really jump the NHS waiting list?", a: "You can't skip ahead of others at the same hospital, but you can switch to a different hospital or NHS-funded provider with a much shorter waiting list, which often achieves the same result." },
+      { type: "faq", q: "How much shorter are ISTC waiting times?", a: "Independent Sector Treatment Centres often have substantially shorter waits for routine elective surgery because they specialise in high-volume procedures, though exact times vary by location and procedure." },
+      { type: "faq", q: "What happens if I wait longer than 18 weeks?", a: "You have the legal right to ask your ICB to offer alternative providers who can treat you sooner. The 18-week maximum is a constitutional standard, though not always met in practice." }
+    ]
+  },
+  {
+    slug: "cash-pay-vs-insurance-surgery-cost-usa-2026",
+    category: "US Healthcare Costs",
+    readTime: "9 min read",
+    date: "June 2026",
+    title: "Cash Pay vs Insurance: Which Is Cheaper for Surgery in the USA? (2026)",
+    metaTitle: "Cash Pay vs Insurance for Surgery USA 2026: Which Is Cheaper? | TreatClever",
+    metaDescription: "Is it cheaper to pay cash or use insurance for surgery in the USA? 2026 guide to self-pay cash prices, hospital price transparency, high-deductible plans and how to save thousands.",
+    keywords: ["cash pay vs insurance surgery", "self pay surgery cost usa", "is it cheaper to pay cash for surgery", "hospital cash price vs insurance", "surgery cost without insurance", "self pay discount hospital"],
+    targetKeyword: "cash pay vs insurance for surgery",
+    excerpt: "Sometimes paying cash for surgery in the US is cheaper than using your insurance \u2014 especially with a high-deductible plan. Here's how to find out and how much you can save in 2026.",
+    sections: [
+      { type: "lead", text: "It sounds backwards, but in 2026 paying cash for surgery in the US is sometimes cheaper than using your health insurance \u2014 particularly if you have a high-deductible plan. This guide explains when self-pay wins, how to find a hospital's cash price, and how to save thousands on common procedures using price transparency rules." },
+      { type: "h2", text: "Is it cheaper to pay cash or use insurance for surgery?" },
+      { type: "p", text: "The honest answer: sometimes, but not always. For people with high-deductible health plans, paying a discounted cash price can be cheaper than running a procedure through insurance \u2014 because you'd be paying out of pocket until you hit your deductible anyway. Direct-pay surgical centres often charge 40\u201360% less than hospital pricing for the same operation." },
+      { type: "p", text: "The major trade-off: money you pay cash usually does not count toward your insurance deductible or out-of-pocket maximum. If you end up needing more care that year, you could be worse off. The decision hinges on your deductible, how much of it you've met, and whether you expect more treatment." },
+      { type: "callout", text: "Rule of thumb: if you have a high deductible you haven't met yet, and the procedure is a one-off, get a cash quote and compare it against your estimated insurance out-of-pocket cost before booking." },
+      { type: "h2", text: "How much can self-pay save on common surgeries?" },
+      { type: "p", text: "Cash prices vary wildly by facility and ZIP code. A hospital might bill an inguinal hernia repair at $18,000 in charges, while an ambulatory surgery centre's all-inclusive cash bundle for the same procedure can come in under $5,000. The bundle typically covers pre-op labs, the surgeon's fee, anaesthesia, facility time, supplies like mesh, and follow-up visits." },
+      { type: "table", headers: ["Procedure", "Hospital Billed", "Cash Bundle (ASC)"], rows: [
+        ["Hernia repair", "Up to $18,000", "$5,000\u2013$8,500"],
+        ["Gallbladder removal", "$8,000\u2013$20,000", "Often under $8,000"],
+        ["Cataract surgery (per eye)", "$3,500+", "~$4,000 all-in"],
+        ["Colonoscopy", "$2,000\u2013$5,000", "Often under $2,500"]
+      ]},
+      { type: "h2", text: "Why are cash prices sometimes lower than insurance rates?" },
+      { type: "p", text: "When you pay cash, the provider cuts out the insurer as middleman \u2014 slashing administrative and billing costs. They also get paid upfront with no chasing of claims. Ambulatory surgery centres are structurally cheaper than hospitals: Medicare pays them roughly half what it pays hospital outpatient departments for the identical procedure, and they carry lower overhead." },
+      { type: "h2", text: "How to find a hospital's cash price" },
+      { type: "p", text: "Since 2021, federal Hospital Price Transparency rules require US hospitals to publish their discounted cash prices online in machine-readable files. Enforcement tightened significantly in 2026. In practice, the published files can be hard to navigate, so calling the billing department directly and asking for an 'all-inclusive self-pay cash price' for your specific CPT code often gets you a clearer \u2014 and sometimes lower \u2014 quote." },
+      { type: "list", items: [
+        "Ask outright: 'What is the all-inclusive cash price for this procedure?' and confirm it covers facility, surgeon, anaesthesia and pathology fees.",
+        "Get the quote in writing as a good-faith estimate \u2014 you're legally entitled to one if you're self-paying.",
+        "Compare against an ambulatory surgery centre, not just the hospital \u2014 ASCs are usually far cheaper.",
+        "Use the TreatClever tool to see typical self-pay cost ranges by state before you call."
+      ]},
+      { type: "h2", text: "When you should use insurance instead" },
+      { type: "p", text: "Insurance is still the better bet for expensive, complex or emergency care \u2014 major surgeries, unexpected complications, chronic conditions, and anything where the total cost could run into tens of thousands. The negotiated rate plus your out-of-pocket maximum protects you from catastrophic bills in a way cash never can. The smart play is to use insurance for big, unpredictable risk and cash for predictable, shoppable procedures." },
+      { type: "h2", text: "How long will you wait for surgery with insurance?" },
+      { type: "p", text: "Even insured, Americans face specialist appointment waits that vary widely by state \u2014 from around 10 days to over 20 days for orthopaedics, and considerably longer for some specialties. Self-pay patients can sometimes access faster appointments. Use the TreatClever tool to check typical insured wait times in your state alongside self-pay cost ranges." },
+      { type: "enquire", text: "Compare self-pay surgery costs and insured wait times for your state using the TreatClever tool \u2014 then explore insurance options through the Enquire Now links if coverage is the better route for you." },
+      { type: "faqHead", text: "Frequently asked questions" },
+      { type: "faq", q: "Is it cheaper to pay cash than use insurance for surgery?", a: "Sometimes \u2014 especially with a high-deductible plan for a one-off, shoppable procedure. Direct-pay surgery centres can cost 40\u201360% less than hospital pricing. But cash payments usually don't count toward your deductible." },
+      { type: "faq", q: "Do hospitals have to tell me their cash price?", a: "Yes. Federal Hospital Price Transparency rules require US hospitals to publish discounted cash prices online, and you're entitled to a good-faith estimate if you self-pay." },
+      { type: "faq", q: "Why is a cash price lower than the insurance rate?", a: "Paying cash removes the insurer middleman, cutting administrative costs and eliminating claim-chasing. Ambulatory surgery centres also have far lower overhead than hospitals." },
+      { type: "faq", q: "Does cash pay count toward my deductible?", a: "Usually no. This is the main drawback \u2014 if you need more care that year, the cash spend won't have moved you toward your out-of-pocket maximum." }
+    ]
+  }
+];
+
+
+// ── ROUTING (pure, runs identically during server prerender and in the browser) ──
+function resolveRoute(path) {
+  const blogMatch = path.match(/^\/blog\/(.+?)\/?$/);
+  if (blogMatch && BLOG_POSTS.some(p => p.slug === blogMatch[1])) {
+    return { tab: 'blogs', slug: blogMatch[1] };
+  }
+  if (/^\/blog\/?$/.test(path))     return { tab: 'blogs',    slug: null };
+  if (/^\/uk-waits\/?$/.test(path)) return { tab: 'uk-waits', slug: null };
+  if (/^\/us-waits\/?$/.test(path)) return { tab: 'us-waits', slug: null };
+  return { tab: 'home', slug: null };
+}
+// Read fresh on every call rather than once at module load — important because
+// prerender.js imports this module once but calls render() in a loop, once per
+// route, setting globalThis.__PRERENDER_PATH__ before each call.
+function getCurrentPath() {
+  if (typeof window !== 'undefined') return window.location.pathname;
+  if (typeof globalThis.__PRERENDER_PATH__ !== 'undefined') return globalThis.__PRERENDER_PATH__;
+  return '/';
+}
+
+// ── ADSENSE AD UNIT ───────────────────────────────────────────────────────────
+// Renders one responsive AdSense unit. Replace the client id below with your real
+// ca-pub-XXXX id (same one as in the <head> script), and replace the slot prop
+// values with the real ad-unit slot IDs from your AdSense dashboard once approved.
+// Safe to ship before approval: if AdSense hasn't loaded, it just renders nothing.
+const ADSENSE_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX';
+function AdUnit({ slot }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    // Don't show ads until a real client id is set, and never crash if the script
+    // is blocked (ad blockers) or not yet approved/loaded.
+    if (ADSENSE_CLIENT.includes('XXXX')) return;
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) { /* AdSense not available — ignore */ }
+  }, []);
+
+  // While the publisher id is still a placeholder, render nothing at all so the
+  // live site never shows an empty ad box.
+  if (ADSENSE_CLIENT.includes('XXXX')) return null;
+
+  return (
+    <div className="my-2 text-center" ref={ref}>
+      <ins className="adsbygoogle"
+        style={{ display: 'block' }}
+        data-ad-client={ADSENSE_CLIENT}
+        data-ad-slot={slot}
+        data-ad-format="auto"
+        data-full-width-responsive="true"></ins>
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function App() {
+  // Lazy initializers run fresh on every component invocation (including each
+  // server render in prerender.js's loop), so the right route is picked up
+  // every time rather than being frozen at first import.
+  const [activeTab, setActiveTab]         = useState(() => resolveRoute(getCurrentPath()).tab);
+  const [region, setRegion]               = useState('uk');
+  const [selectedProc, setSelectedProc]   = useState(null);
+  const [selectedCat, setSelectedCat]     = useState('All');
+  const [ukLocation, setUkLocation]       = useState(null);
+  const [usLocation, setUsLocation]       = useState(null);
+  const [postcodeInput, setPostcodeInput] = useState('');
+  const [stateInput, setStateInput]       = useState('');
+  const [ukMsg, setUkMsg]                 = useState('');
+  const [ukErr, setUkErr]                 = useState(false);
+  const [loading, setLoading]             = useState(false);
+  const [activePostSlug, setActivePostSlug] = useState(() => resolveRoute(getCurrentPath()).slug);
+  const [blogSearch, setBlogSearch]       = useState('');
+  const [ukWaitSearch, setUkWaitSearch]   = useState('');
+  const [usWaitSearch, setUsWaitSearch]   = useState('');
+  const [emailInput, setEmailInput]       = useState('');
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const resultsRef                        = useRef(null);
+  const blogTopRef                        = useRef(null);
+
+  const scrollToResults = () => {
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  };
+
+  const handleSelectProc = (proc) => {
+    setSelectedProc(proc);
+    scrollToResults();
+  };
+
+  // Open/close posts just set state — the URL, title and meta are synced centrally
+  // by the effect below, so every view has one real, indexable, shareable path.
+  const openPost = (post) => {
+    setActivePostSlug(post.slug);
+    setTimeout(() => blogTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
+
+  const closePost = () => {
+    setActivePostSlug(null);
+    setTimeout(() => blogTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
+
+  // ── Routing: handle browser back/forward — initial route is already resolved above ──
+  useEffect(() => {
+    const onPopState = () => {
+      const r = resolveRoute(window.location.pathname);
+      setActiveTab(r.tab);
+      setActivePostSlug(r.slug);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // ── Routing: sync app state → URL path, document.title, meta description, canonical ──
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const SITE = 'https://treatclever.co.uk';
+    let path = '/';
+    let title = 'NHS Waiting Times vs Private Cost — Compare UK & US Healthcare | TreatClever';
+    let desc  = 'Compare NHS waiting times by postcode against private self-pay costs, and US insured wait times by state against cash-pay prices, for 25+ procedures. Updated monthly.';
+
+    if (activeTab === 'blogs' && activePostSlug) {
+      const post = BLOG_POSTS.find(p => p.slug === activePostSlug);
+      if (post) { path = `/blog/${post.slug}`; title = post.metaTitle; desc = post.metaDescription; }
+    } else if (activeTab === 'blogs') {
+      path = '/blog';
+      title = 'Health Blogs | NHS Waiting Times, Private Costs & US Healthcare Guides | TreatClever';
+      desc  = 'Guides on NHS waiting times, private treatment costs, Right to Choose, and US cash-pay vs insurance — helping you make faster, cheaper healthcare decisions.';
+    } else if (activeTab === 'uk-waits') {
+      path = '/uk-waits';
+      title = 'NHS Waiting Times by Region 2026 — Full ICB League Table | TreatClever';
+      desc  = 'NHS Referral to Treatment (RTT) waiting times for all 42 ICBs by specialty, updated monthly. See how your region compares and what you can legally do about long waits.';
+    } else if (activeTab === 'us-waits') {
+      path = '/us-waits';
+      title = 'US Specialist Wait Times by State 2026 — Full Comparison | TreatClever';
+      desc  = 'Specialist appointment wait times for all 50 US states by specialty, from the AMN Healthcare survey, plus how self-pay can get you seen faster.';
+    }
+
+    if (window.location.pathname !== path) window.history.pushState({}, '', path);
+    document.title = title;
+
+    const setMeta = (selector, attr, key, value) => {
+      let el = document.querySelector(selector);
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
+      el.setAttribute('content', value);
+    };
+    setMeta('meta[name="description"]', 'name', 'description', desc);
+    setMeta('meta[property="og:title"]', 'property', 'og:title', title);
+    setMeta('meta[property="og:description"]', 'property', 'og:description', desc);
+    setMeta('meta[property="og:url"]', 'property', 'og:url', SITE + path);
+    setMeta('meta[name="twitter:title"]', 'name', 'twitter:title', title);
+    setMeta('meta[name="twitter:description"]', 'name', 'twitter:description', desc);
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) { canonical = document.createElement('link'); canonical.setAttribute('rel', 'canonical'); document.head.appendChild(canonical); }
+    canonical.setAttribute('href', SITE + path);
+  }, [activeTab, activePostSlug]);
+
+  const handleRegionChange = (r) => { setRegion(r); setSelectedProc(null); };
+
+  // Newsletter signup — posts the email to your form provider.
+  // TODO before launch: replace NEWSLETTER_ENDPOINT with your real Formspree/Buttondown/Mailchimp
+  // form URL. Until then the address is captured to console only so the UX still works in testing.
+  const NEWSLETTER_ENDPOINT = ''; // e.g. 'https://formspree.io/f/xxxxxxx'
+  const handleEmailSignup = async (e) => {
+    e.preventDefault();
+    const email = emailInput.trim();
+    if (!email) return;
+    setEmailSubmitted(true); // optimistic — never block the user on the network
+    try {
+      if (NEWSLETTER_ENDPOINT) {
+        await fetch(NEWSLETTER_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ email, region, source: 'results-capture' }),
+        });
+      } else {
+        console.warn('[TreatClever] NEWSLETTER_ENDPOINT not set — captured locally only:', email);
+      }
+    } catch (err) {
+      console.error('[TreatClever] newsletter signup failed:', err);
+    }
+  };
+
+  const findICB = (rawName) => {
+    if (!rawName) return null;
+    const keys = Object.keys(NHS_ICB_RTT);
+    const norm  = rawName.toLowerCase().replace('nhs ','').replace(' icb','');
+    return keys.find(k =>
+      k.toLowerCase().includes(norm) || norm.includes(k.toLowerCase().replace('nhs ','').replace(' icb',''))
+    ) || null;
+  };
+
+  const doPostcodeLookup = async () => {
+    const raw = postcodeInput.trim().replace(/\s+/g,'').toUpperCase();
+    if (!raw || raw.length < 5) { setUkMsg('Enter a valid postcode'); setUkErr(true); return; }
+    setLoading(true);
+    try {
+      const res  = await fetch(`https://api.postcodes.io/postcodes/${encodeURIComponent(raw)}`);
+      const json = await res.json();
+      if (json.status !== 200 || !json.result) { setUkMsg('Postcode not found'); setUkErr(true); setLoading(false); return; }
+      const matched = findICB(json.result.icb || '');
+      if (matched) {
+        setUkLocation({ name: matched.replace('NHS ','').replace(' Integrated Care Board','').replace(' ICB',''), data: NHS_ICB_RTT[matched] });
+        setUkMsg('✓ ' + matched.replace('NHS ','').replace(' ICB',''));
+        setUkErr(false);
+      } else {
+        const vals = Object.values(NHS_ICB_RTT);
+        const avg  = {};
+        Object.keys(vals[0]).forEach(k => { avg[k] = Math.round(vals.reduce((s,v)=>s+(v[k]||0),0)/vals.length); });
+        setUkLocation({ name:'National average', data: avg });
+        setUkMsg('✓ Using national NHS average');
+        setUkErr(false);
+      }
+    } catch { setUkMsg('Lookup failed — check postcode'); setUkErr(true); }
+    setLoading(false);
+  };
+
+  const handleStateSelect = (state) => {
+    setStateInput(state);
+    if (state) {
+      setUsLocation({ name: state, data: US_STATE_WAITS[state] });
+      setRegion('us');
+    } else {
+      setUsLocation(null);
+    }
+  };
+
+  const activeLocation  = region === 'uk' ? ukLocation : usLocation;
+  const filteredProcs   = selectedCat === 'All' ? PROCEDURES : PROCEDURES.filter(p => p.cat === selectedCat);
+  const currencySymbol  = region === 'uk' ? '£' : '$';
+
+  // Signature element: the time delta between public and private routes — the core value prop.
+  const publicWaitValue = selectedProc && activeLocation
+    ? (region === 'uk' ? activeLocation.data[selectedProc.ukKey] : activeLocation.data[selectedProc.usKey])
+    : null;
+  const privateWaitValue = region === 'uk' ? 2.5 : 10; // midpoint of displayed private range
+  const timeSaved = publicWaitValue ? Math.max(0, Math.round(publicWaitValue - privateWaitValue)) : null;
+  const timeSavedPct = publicWaitValue ? Math.round((timeSaved / publicWaitValue) * 100) : null;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+
+      {/* ── HEADER ────────────────────────────────────────────────────────── */}
+      <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-5">
+
+          {/* Brand */}
+          <div className="flex items-center gap-3 mb-5 cursor-pointer" onClick={() => { setActiveTab('home'); setActivePostSlug(null); }} role="button" aria-label="TreatClever home">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/30">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-lg font-extrabold tracking-tight bg-gradient-to-r from-blue-300 via-cyan-300 to-teal-300 bg-clip-text text-transparent">
+                TreatClever
+              </p>
+              <p className="text-xs text-slate-500 -mt-0.5">Smart healthcare decisions</p>
+            </div>
+          </div>
+
+          {/* Single nav row: tabs | divider | region | UK input | US input */}
+          <div className="flex items-center gap-2 flex-wrap">
+
+            {/* Page tabs */}
+            <nav aria-label="Main navigation" className="flex gap-1 overflow-x-auto scrollbar-hide">
+              {TABS.map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                    aria-current={activeTab === tab.id ? 'page' : undefined}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                      activeTab === tab.id
+                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md shadow-cyan-500/20'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    }`}>
+                    <Icon className="w-3.5 h-3.5" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* ── MAIN ──────────────────────────────────────────────────────────── */}
+      <main className="max-w-7xl mx-auto px-4 py-10">
+
+        {activeTab === 'home' && (
+          <>
+            {/* SEO: primary H1 + supporting copy (the only H1 on the page) */}
+            <div className="mb-5">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 leading-tight">
+                NHS Waiting Times vs Private Treatment Cost — UK &amp; US Healthcare Comparison
+              </h1>
+              <p className="text-sm text-slate-400 mt-2 max-w-2xl">
+                Compare real NHS waiting times by postcode against private self-pay costs, or check US insured wait times by state against cash-pay prices — for 25+ common procedures, updated monthly.
+              </p>
+            </div>
+
+            {/* Trust strip — credibility signals near the top boost both conversion and share-worthiness */}
+            <div className="flex items-center gap-x-5 gap-y-2 flex-wrap mb-6 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Updated monthly from NHS England &amp; AMN Healthcare</span>
+              <span className="hidden sm:inline text-slate-700">•</span>
+              <span>42 NHS regions covered</span>
+              <span className="hidden sm:inline text-slate-700">•</span>
+              <span>50 US states covered</span>
+              <span className="hidden sm:inline text-slate-700">•</span>
+              <span>25+ procedures</span>
+            </div>
+
+            {/* Location bar — Step 1, sits right with the procedure picker */}
+            <div className="mb-6 p-5 border border-slate-700 rounded-xl bg-slate-900/40">
+              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">1 · Your Location</h2>
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Region toggles */}
+                <button onClick={() => handleRegionChange('uk')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${region === 'uk' ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md' : 'border border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                  🇬🇧 United Kingdom
+                </button>
+                <button onClick={() => handleRegionChange('us')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${region === 'us' ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md' : 'border border-slate-700 text-slate-400 hover:border-slate-500'}`}>
+                  🇺🇸 United States
+                </button>
+
+                <div className="h-5 w-px bg-slate-700 hidden sm:block" />
+
+                {/* UK postcode — only visible when UK is the active region */}
+                {region === 'uk' && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-slate-500 hidden md:block">🇬🇧</span>
+                    <input type="text" placeholder="UK postcode"
+                      value={postcodeInput}
+                      onChange={(e) => setPostcodeInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === 'Enter' && doPostcodeLookup()}
+                      maxLength="8"
+                      aria-label="Enter UK postcode"
+                      className="px-3 py-1.5 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder:text-slate-600 w-28"
+                    />
+                    <button onClick={() => postcodeInput.trim() && doPostcodeLookup()} disabled={loading}
+                      className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-xs font-semibold disabled:opacity-40 transition-colors">
+                      {loading ? '…' : 'Go'}
+                    </button>
+                  </div>
+                )}
+
+                {/* US state — only visible when US is the active region */}
+                {region === 'us' && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-slate-500 hidden md:block">🇺🇸</span>
+                    <select value={stateInput} onChange={(e) => handleStateSelect(e.target.value)}
+                      aria-label="Select US state"
+                      className="px-3 py-1.5 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500 w-36">
+                      <option value="">US state…</option>
+                      {Object.keys(US_STATE_WAITS).sort().map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {/* Status feedback */}
+                {region === 'uk' && ukMsg && <span className={`text-xs font-medium ${ukErr ? 'text-red-400' : 'text-emerald-400'}`}>{ukMsg}</span>}
+                {region === 'us' && usLocation && <span className="text-xs font-medium text-emerald-400">✓ {usLocation.name}</span>}
+              </div>
+            </div>
+
+            {/* Category filter */}
+            <div className="flex gap-2 flex-wrap mb-5">
+              {CATEGORIES.map(cat => (
+                <button key={cat} onClick={() => setSelectedCat(cat)}
+                  className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${selectedCat === cat ? 'bg-cyan-600 text-white' : 'border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-slate-300'}`}>
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            {/* Procedure grid */}
+            <div className="mb-10 p-5 border border-slate-700 rounded-xl bg-slate-900/40">
+              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">2 · Select a Procedure</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2.5">
+                {filteredProcs.map(proc => (
+                  <button key={proc.id} onClick={() => handleSelectProc(proc)}
+                    aria-label={`Compare NHS wait time and private cost for ${proc.label}`}
+                    className={`text-left p-3.5 rounded-xl border-2 transition-all ${
+                      selectedProc?.id === proc.id
+                        ? 'border-cyan-500 bg-slate-800 shadow-lg shadow-cyan-500/20'
+                        : 'border-slate-700 bg-slate-800/40 hover:border-slate-600 hover:bg-slate-800/70'
+                    }`}>
+                    <div className="text-sm font-semibold text-slate-100 leading-snug">{proc.label}</div>
+                    <div className="text-xs text-slate-500 mt-1">{proc.cat}</div>
+                    <div className="text-xs text-cyan-500/80 font-medium mt-1.5">
+                      from {currencySymbol}{(region === 'uk' ? proc.ukCost.lo : proc.usCost.lo).toLocaleString()}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── RESULTS (scroll anchor) ── */}
+            <div ref={resultsRef}>
+              {selectedProc && !activeLocation && (
+                <div className="p-8 border border-dashed border-slate-700 rounded-xl text-center text-slate-500 text-sm">
+                  Enter your {region === 'uk' ? 'postcode above' : 'state above'} to see localised wait times for <span className="text-slate-300 font-medium">{selectedProc.label}</span>
+                </div>
+              )}
+
+              {selectedProc && activeLocation && (
+                <div className="space-y-5 animate-slideIn">
+
+                  {/* Result heading */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h2 className="text-lg font-bold text-slate-100">{selectedProc.label}</h2>
+                    <span className="text-xs px-2 py-0.5 bg-slate-700 text-slate-400 rounded-full">{selectedProc.cat}</span>
+                    <span className="text-xs px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-400 rounded-full">{activeLocation.name}</span>
+                  </div>
+
+                  {/* Signature element: the time-saved hero strip — this IS the product's value prop */}
+                  {timeSaved > 0 && (
+                    <div className="relative overflow-hidden rounded-lg border border-amber-700/40 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 p-5 sm:p-6">
+                      <div className="flex items-center gap-5 flex-wrap">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-4xl sm:text-5xl font-extrabold text-amber-400 leading-none">{timeSaved}</span>
+                          <span className="text-sm text-amber-200/80 font-medium">{region === 'uk' ? 'weeks' : 'days'} sooner going private</span>
+                        </div>
+                        <div className="hidden sm:block h-10 w-px bg-amber-800/40" />
+                        <p className="text-sm text-slate-300 max-w-md">
+                          That's <strong className="text-amber-300">{timeSavedPct}% less waiting</strong> than the {region === 'uk' ? 'NHS' : 'insured'} route in {activeLocation.name} — for {currencySymbol}{(region === 'uk' ? selectedProc.ukCost.avg : selectedProc.usCost.avg).toLocaleString()} self-pay.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Comparison cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    {/* Public card */}
+                    <div className="p-6 border border-slate-700 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800/80">
+                      <div className="flex items-center gap-2 mb-5">
+                        <Clock className="w-4 h-4 text-slate-400" />
+                        <h3 className="font-bold text-slate-200 text-sm uppercase tracking-wide">{region === 'uk' ? 'NHS Route' : 'Insured Route'}</h3>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Typical wait</p>
+                      <p className="text-6xl font-extrabold text-slate-100 leading-none">
+                        {region === 'uk' ? activeLocation.data[selectedProc.ukKey] : activeLocation.data[selectedProc.usKey]}
+                      </p>
+                      <p className="text-sm text-slate-500 mt-1 mb-6">{region === 'uk' ? 'weeks' : 'days'}</p>
+                      <div className="p-4 bg-slate-800/80 border border-slate-700 rounded-xl">
+                        <p className="text-xs font-semibold text-slate-500 uppercase">Cost to you</p>
+                        <p className="text-2xl font-extrabold text-emerald-400 mt-1">{region === 'uk' ? 'Free' : 'Copay only'}</p>
+                      </div>
+                    </div>
+
+                    {/* Private card */}
+                    <div className="p-6 border border-cyan-700/50 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800/80 shadow-xl shadow-cyan-900/20">
+                      <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-4 h-4 text-cyan-400" />
+                          <h3 className="font-bold text-slate-200 text-sm uppercase tracking-wide">Private / Self-Pay</h3>
+                        </div>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Time to treatment</p>
+                      <p className="text-6xl font-extrabold text-cyan-400 leading-none">{region === 'uk' ? '2–3' : '7–14'}</p>
+                      <p className="text-sm text-slate-500 mt-1 mb-6">{region === 'uk' ? 'weeks' : 'days'}</p>
+                      <div className="p-4 bg-slate-800/80 border border-slate-700 rounded-xl mb-4">
+                        <p className="text-xs font-semibold text-slate-500 uppercase">Typical cost</p>
+                        <p className="text-2xl font-extrabold text-cyan-400 mt-1">
+                          {currencySymbol}{(region === 'uk' ? selectedProc.ukCost.avg : selectedProc.usCost.avg).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Range: {currencySymbol}{(region === 'uk' ? selectedProc.ukCost.lo : selectedProc.usCost.lo).toLocaleString()} – {currencySymbol}{(region === 'uk' ? selectedProc.ukCost.hi : selectedProc.usCost.hi).toLocaleString()}
+                        </p>
+                      </div>
+
+                      {/* Enquire Now — affiliate links, redesigned as the primary conversion moment */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2.5">
+                          <p className="text-xs font-bold text-slate-300 uppercase tracking-wider">Get a Quote</p>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-emerald-950/60 border border-emerald-800/50 text-emerald-400 rounded font-semibold">No obligation</span>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {PROVIDERS[region].map((p, idx) => (
+                            <a key={p.name} href={p.url} target="_blank" rel="noopener noreferrer"
+                              className={`flex items-center justify-between px-3.5 py-3 rounded-lg transition-all group ${
+                                idx === 0
+                                  ? 'bg-gradient-to-r from-amber-600/20 to-amber-500/10 border border-amber-600/50 hover:border-amber-400/70 hover:from-amber-600/30'
+                                  : 'bg-slate-800/60 border border-slate-700 hover:border-cyan-600/50 hover:bg-slate-800'
+                              }`}>
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <p className={`text-sm font-bold ${idx === 0 ? 'text-amber-300' : 'text-slate-200'}`}>{p.name}</p>
+                                  {idx === 0 && <span className="text-[9px] px-1.5 py-0.5 bg-amber-500 text-slate-950 rounded-full font-extrabold uppercase tracking-wide">Popular</span>}
+                                </div>
+                                <p className="text-xs text-slate-500 mt-0.5">{p.note}</p>
+                              </div>
+                              <ExternalLink className={`w-4 h-4 flex-shrink-0 transition-transform group-hover:translate-x-0.5 ${idx === 0 ? 'text-amber-400' : 'text-slate-500 group-hover:text-cyan-400'}`} />
+                            </a>
+                          ))}
+                        </div>
+                        <p className="text-xs text-slate-600 mt-2.5">Affiliate links — TreatClever may earn a commission at no extra cost to you.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Insight bar */}
+                  <div className="p-4 bg-amber-950/25 border border-amber-700/40 rounded-xl flex gap-3">
+                    <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-200">
+                      {region === 'uk'
+                        ? `In ${activeLocation.name}, the NHS median wait is ${activeLocation.data[selectedProc.ukKey]} weeks. Private treatment averages £${selectedProc.ukCost.avg.toLocaleString()} with access typically within 2–3 weeks.`
+                        : `In ${activeLocation.name}, insured patients wait ~${activeLocation.data[selectedProc.usKey]} days. Cash-pay patients often negotiate 30–50% off listed prices.`
+                      }
+                    </p>
+                  </div>
+
+                  {/* Data note */}
+                  <div className="p-3 bg-slate-800/40 rounded-lg border border-slate-700/50 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
+                    <span><strong className="text-slate-400">Sources:</strong> {region === 'uk' ? 'NHS England RTT Mar 2026 · PHIN self-pay fees' : 'AMN Healthcare 2025 · CMS Price Transparency'}</span>
+                    <span><strong className="text-slate-400">Disclaimer:</strong> Information only — not medical advice.</span>
+                  </div>
+
+                  {/* In-content ad — highest-value placement: shown only after a result, at peak engagement */}
+                  <AdUnit slot="1234567890" />
+
+                  {/* Email capture — placed at peak intent, right after the user sees their personal result */}
+                  <div className="p-5 border border-slate-700 rounded-xl bg-slate-900/40">
+                    {!emailSubmitted ? (
+                      <>
+                        <p className="text-sm font-bold text-slate-200 mb-1">Get notified when {region === 'uk' ? 'NHS wait times' : 'state wait times'} update</p>
+                        <p className="text-xs text-slate-500 mb-3">Monthly email — your local wait time, new procedures added, no spam.</p>
+                        <form onSubmit={handleEmailSignup} className="flex gap-2 max-w-sm">
+                          <input type="email" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)}
+                            placeholder="you@example.com" aria-label="Email address"
+                            className="flex-1 px-3 py-2 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder:text-slate-600" />
+                          <button type="submit" className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg text-xs font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-shadow whitespace-nowrap">
+                            Notify me
+                          </button>
+                        </form>
+                      </>
+                    ) : (
+                      <p className="text-sm text-emerald-400 font-medium">✓ You're on the list — we'll email you when {activeLocation.name} data updates.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {activeTab === 'blogs' && (
+          <div ref={blogTopRef}>
+            {!activePostSlug ? (
+              <>
+                {/* SEO: H1 + intro for the blog index page */}
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 leading-tight mb-2">
+                  Health Blogs — NHS Waiting Times, Private Costs &amp; US Healthcare Guides
+                </h1>
+                <p className="text-sm text-slate-400 max-w-2xl mb-6">
+                  In-depth, regularly updated guides on NHS waiting times, private treatment costs, NHS Right to Choose, and US cash-pay vs insurance decisions — written to help you make an informed healthcare choice.
+                </p>
+
+                {/* Search */}
+                <div className="relative mb-6 max-w-md">
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={blogSearch}
+                    onChange={(e) => setBlogSearch(e.target.value)}
+                    placeholder="Search articles, e.g. hip replacement, right to choose, cash pay…"
+                    className="w-full pl-9 pr-3 py-2 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder:text-slate-600"
+                  />
+                </div>
+
+                {/* Blog cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {BLOG_POSTS.filter(post => {
+                    const q = blogSearch.toLowerCase().trim();
+                    if (!q) return true;
+                    return post.title.toLowerCase().includes(q)
+                      || post.excerpt.toLowerCase().includes(q)
+                      || post.category.toLowerCase().includes(q)
+                      || post.keywords.some(k => k.toLowerCase().includes(q));
+                  }).map(post => (
+                    <article key={post.slug}
+                      onClick={() => openPost(post)}
+                      className="group cursor-pointer p-5 border border-slate-700 rounded-2xl bg-slate-900/40 hover:border-cyan-600/60 hover:bg-slate-900/70 transition-all flex flex-col">
+                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                        <span className="text-xs px-2 py-0.5 bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 rounded-full font-semibold">{post.category}</span>
+                        <span className="text-xs text-slate-500">{post.readTime}</span>
+                      </div>
+                      <h2 className="text-base font-bold text-slate-100 leading-snug mb-2 group-hover:text-cyan-300 transition-colors">
+                        {post.title}
+                      </h2>
+                      <p className="text-sm text-slate-400 leading-relaxed mb-4 flex-1">{post.excerpt}</p>
+                      <div className="flex items-center justify-between text-xs text-slate-500 pt-3 border-t border-slate-800">
+                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{post.date}</span>
+                        <span className="text-cyan-400 font-semibold group-hover:translate-x-0.5 transition-transform">Read guide →</span>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+
+                {BLOG_POSTS.filter(post => {
+                  const q = blogSearch.toLowerCase().trim();
+                  if (!q) return true;
+                  return post.title.toLowerCase().includes(q) || post.excerpt.toLowerCase().includes(q) || post.category.toLowerCase().includes(q) || post.keywords.some(k => k.toLowerCase().includes(q));
+                }).length === 0 && (
+                  <p className="text-sm text-slate-500 mt-8">No articles match "{blogSearch}" — try a different search term.</p>
+                )}
+              </>
+            ) : (
+              (() => {
+                const post = BLOG_POSTS.find(p => p.slug === activePostSlug);
+                if (!post) return null;
+                const otherPosts = BLOG_POSTS.filter(p => p.slug !== post.slug);
+
+                // JSON-LD structured data for Article + FAQPage — improves rich-result eligibility in Google.
+                const faqEntries = post.sections.filter(s => s.type === 'faq');
+                const jsonLd = {
+                  "@context": "https://schema.org",
+                  "@graph": [
+                    {
+                      "@type": "Article",
+                      "headline": post.title,
+                      "description": post.metaDescription,
+                      "datePublished": post.date,
+                      "author": { "@type": "Organization", "name": "TreatClever" },
+                      "publisher": { "@type": "Organization", "name": "TreatClever" },
+                      "keywords": post.keywords.join(", ")
+                    },
+                    {
+                      "@type": "FAQPage",
+                      "mainEntity": faqEntries.map(f => ({
+                        "@type": "Question",
+                        "name": f.q,
+                        "acceptedAnswer": { "@type": "Answer", "text": f.a }
+                      }))
+                    }
+                  ]
+                };
+
+                return (
+                  <article>
+                    {/* JSON-LD for rich snippets / FAQ rich results */}
+                    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
+                    {/* Breadcrumb (SEO + UX) */}
+                    <nav aria-label="Breadcrumb" className="text-xs text-slate-500 mb-4 flex items-center gap-1.5">
+                      <button onClick={() => { setActiveTab('blogs'); closePost(); }} className="hover:text-cyan-400 transition-colors">Health Blogs</button>
+                      <span>/</span>
+                      <span className="text-slate-400">{post.category}</span>
+                    </nav>
+
+                    <button onClick={closePost} className="flex items-center gap-1.5 text-sm text-cyan-400 hover:text-cyan-300 mb-5 font-medium transition-colors">
+                      <ChevronLeft className="w-4 h-4" /> All Health Blogs
+                    </button>
+
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <span className="text-xs px-2 py-0.5 bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 rounded-full font-semibold">{post.category}</span>
+                      <span className="text-xs text-slate-500 flex items-center gap-1"><Calendar className="w-3 h-3" />{post.date}</span>
+                      <span className="text-xs text-slate-500">{post.readTime}</span>
+                    </div>
+
+                    {/* SEO: single H1 per article, matches target search intent exactly */}
+                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 leading-tight mb-3">{post.title}</h1>
+                    <p className="text-sm text-slate-400 mb-6 italic">Target search: "{post.targetKeyword}"</p>
+
+                    <div className="prose-content max-w-none">
+                      {post.sections.map((sec, i) => {
+                        if (sec.type === 'lead') {
+                          return <p key={i} className="text-base text-slate-200 leading-relaxed mb-6 font-medium">{sec.text}</p>;
+                        }
+                        if (sec.type === 'h2') {
+                          return <h2 key={i} className="text-xl font-bold text-slate-100 mt-8 mb-3">{sec.text}</h2>;
+                        }
+                        if (sec.type === 'p') {
+                          return <p key={i} className="text-sm text-slate-300 leading-relaxed mb-4">{sec.text}</p>;
+                        }
+                        if (sec.type === 'callout') {
+                          return (
+                            <div key={i} className="my-5 p-4 bg-cyan-950/25 border border-cyan-800/40 rounded-xl flex gap-3">
+                              <Zap className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                              <p className="text-sm text-cyan-100">{sec.text}</p>
+                            </div>
+                          );
+                        }
+                        if (sec.type === 'enquire') {
+                          return (
+                            <div key={i} className="my-6 p-5 bg-gradient-to-br from-slate-900 to-slate-800 border border-cyan-700/50 rounded-xl">
+                              <p className="text-sm text-slate-200 mb-3">{sec.text}</p>
+                              <button onClick={() => { setActiveTab('home'); closePost(); }}
+                                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-shadow">
+                                Compare costs &amp; wait times →
+                              </button>
+                            </div>
+                          );
+                        }
+                        if (sec.type === 'list') {
+                          return (
+                            <ul key={i} className="mb-5 space-y-2">
+                              {sec.items.map((item, j) => (
+                                <li key={j} className="text-sm text-slate-300 leading-relaxed flex gap-2.5">
+                                  <span className="text-cyan-500 font-bold flex-shrink-0">{j + 1}.</span>
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          );
+                        }
+                        if (sec.type === 'table') {
+                          return (
+                            <div key={i} className="mb-6 overflow-x-auto rounded-xl border border-slate-700">
+                              <table className="w-full text-sm">
+                                <thead>
+                                  <tr className="bg-slate-800/80">
+                                    {sec.headers.map((h, j) => (
+                                      <th key={j} className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">{h}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {sec.rows.map((row, j) => (
+                                    <tr key={j} className={j % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-900/10'}>
+                                      {row.map((cell, k) => (
+                                        <td key={k} className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{cell}</td>
+                                      ))}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          );
+                        }
+                        if (sec.type === 'faqHead') {
+                          return <h2 key={i} className="text-xl font-bold text-slate-100 mt-8 mb-4">{sec.text}</h2>;
+                        }
+                        if (sec.type === 'faq') {
+                          return (
+                            <div key={i} className="mb-4 p-4 bg-slate-800/40 border border-slate-700/60 rounded-xl">
+                              <p className="text-sm font-bold text-slate-100 mb-1.5">{sec.q}</p>
+                              <p className="text-sm text-slate-400 leading-relaxed">{sec.a}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+
+                    {/* End-of-article ad — strong placement after the reader has engaged */}
+                    <AdUnit slot="0987654321" />
+
+                    {/* Keyword tags (SEO footer signal + UX) */}
+                    <div className="mt-8 pt-5 border-t border-slate-800 flex items-center gap-2 flex-wrap">
+                      <Tag className="w-3.5 h-3.5 text-slate-600" />
+                      {post.keywords.map(k => (
+                        <span key={k} className="text-xs px-2.5 py-1 bg-slate-800/60 border border-slate-700 text-slate-400 rounded-full">{k}</span>
+                      ))}
+                    </div>
+
+                    {/* Internal links to other posts — SEO link equity + dwell time */}
+                    <div className="mt-10">
+                      <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Related guides</h2>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {otherPosts.map(p => (
+                          <button key={p.slug} onClick={() => openPost(p)}
+                            className="text-left p-4 border border-slate-700 rounded-xl bg-slate-900/40 hover:border-cyan-600/60 transition-all">
+                            <span className="text-xs px-2 py-0.5 bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 rounded-full font-semibold">{p.category}</span>
+                            <p className="text-sm font-semibold text-slate-100 mt-2 leading-snug">{p.title}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })()
+            )}
+          </div>
+        )}
+
+        {activeTab === 'uk-waits' && (
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 leading-tight mb-3">
+              NHS Waiting Times by Region — UK 2026
+            </h1>
+            <p className="text-sm text-slate-400 max-w-2xl mb-6">
+              NHS Referral to Treatment (RTT) waiting times vary enormously across England's 42 Integrated Care Boards (ICBs). Below is a full regional breakdown by specialty, sourced from NHS England RTT data (March 2026), plus a clear explanation of why waits differ and what you can legally do about it.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+              <div className="p-4 border border-slate-700 rounded-xl bg-slate-900/40">
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Fastest ICB (Orthopaedics)</p>
+                <p className="text-2xl font-extrabold text-emerald-400">30 weeks</p>
+                <p className="text-xs text-slate-500 mt-1">NHS Frimley ICB</p>
+              </div>
+              <div className="p-4 border border-slate-700 rounded-xl bg-slate-900/40">
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Slowest ICB (Orthopaedics)</p>
+                <p className="text-2xl font-extrabold text-red-400">66 weeks</p>
+                <p className="text-xs text-slate-500 mt-1">NHS Mid and South Essex ICB</p>
+              </div>
+              <div className="p-4 border border-slate-700 rounded-xl bg-slate-900/40">
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-1">National Average (all specialties)</p>
+                <p className="text-2xl font-extrabold text-cyan-400">~45 weeks</p>
+                <p className="text-xs text-slate-500 mt-1">Across 42 ICBs, March 2026</p>
+              </div>
+            </div>
+
+            <h2 className="text-xl font-bold text-slate-100 mt-8 mb-3">Why do NHS waiting times vary so much by region?</h2>
+            <p className="text-sm text-slate-300 leading-relaxed mb-4">
+              NHS waiting times are driven by local hospital capacity, staffing levels, demand from an ageing population, and how efficiently each Integrated Care Board manages elective care. Areas with Independent Sector Treatment Centres (ISTCs) handling high-volume routine procedures — such as Frimley and Surrey Heartlands — consistently post shorter waits than ICBs covering larger, more deprived populations with fewer alternative providers, such as Mid and South Essex or West Yorkshire.
+            </p>
+            <p className="text-sm text-slate-300 leading-relaxed mb-4">
+              The gap between the fastest and slowest ICB for the same specialty can exceed 30 weeks — which is exactly why <button onClick={() => { setActiveTab('blogs'); }} className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2">NHS Right to Choose</button> is so valuable: you have a legal right to be referred to any NHS-contracted provider in England, not just your nearest one.
+            </p>
+
+            <h2 className="text-xl font-bold text-slate-100 mt-8 mb-4">NHS waiting times by specialty — full regional table</h2>
+            <p className="text-xs text-slate-500 mb-3">Median wait in weeks, NHS England RTT data, March 2026. Use the search field below to filter by ICB.</p>
+
+            <div className="relative mb-4 max-w-md">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input type="text" value={ukWaitSearch} onChange={(e) => setUkWaitSearch(e.target.value)}
+                placeholder="Search by ICB or region, e.g. London, Manchester…"
+                className="w-full pl-9 pr-3 py-2 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder:text-slate-600" />
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-slate-700 mb-8">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-800/80">
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">ICB / Region</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">Orthopaedics</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">Ophthalmology</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">General Surgery</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">Gynaecology</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">Cardiology</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(NHS_ICB_RTT)
+                    .filter(([name]) => name.toLowerCase().includes(ukWaitSearch.toLowerCase()))
+                    .map(([name, data], i) => (
+                    <tr key={name} className={i % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-900/10'}>
+                      <td className="px-4 py-2.5 text-slate-200 border-t border-slate-800 font-medium">{name.replace('NHS ', '').replace(' ICB', '')}</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.ortho}w</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.ophth}w</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.gen}w</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.gynae}w</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.cardiac}w</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h2 className="text-xl font-bold text-slate-100 mt-8 mb-3">What can you do if your local NHS wait is too long?</h2>
+            <ul className="mb-6 space-y-2">
+              <li className="text-sm text-slate-300 leading-relaxed flex gap-2.5"><span className="text-cyan-500 font-bold flex-shrink-0">1.</span><span>Use <strong className="text-slate-100">NHS Right to Choose</strong> — ask your GP to refer you to a faster NHS-contracted trust or NHS-funded independent provider, at no cost.</span></li>
+              <li className="text-sm text-slate-300 leading-relaxed flex gap-2.5"><span className="text-cyan-500 font-bold flex-shrink-0">2.</span><span>Check the table above and compare your ICB against neighbouring regions — some borders show a 20+ week difference.</span></li>
+              <li className="text-sm text-slate-300 leading-relaxed flex gap-2.5"><span className="text-cyan-500 font-bold flex-shrink-0">3.</span><span>Use the TreatClever comparison tool to see your exact private self-pay cost alongside your NHS wait, for any of 25+ procedures.</span></li>
+            </ul>
+
+            <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 border border-cyan-700/50 rounded-xl mb-8">
+              <p className="text-sm text-slate-200 mb-3">Want to see your exact NHS wait next to a private cost estimate?</p>
+              <button onClick={() => { setActiveTab('home'); }}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-shadow">
+                Compare your postcode now →
+              </button>
+            </div>
+
+            <h2 className="text-xl font-bold text-slate-100 mt-8 mb-4">Frequently asked questions</h2>
+            <div className="mb-4 p-4 bg-slate-800/40 border border-slate-700/60 rounded-xl">
+              <p className="text-sm font-bold text-slate-100 mb-1.5">What is the average NHS waiting time in 2026?</p>
+              <p className="text-sm text-slate-400 leading-relaxed">Across England's 42 ICBs, the median wait varies by specialty and region — orthopaedics ranges from 30 weeks (fastest ICB) to 66 weeks (slowest), with most regions falling between 40–55 weeks.</p>
+            </div>
+            <div className="mb-4 p-4 bg-slate-800/40 border border-slate-700/60 rounded-xl">
+              <p className="text-sm font-bold text-slate-100 mb-1.5">Can I choose a different NHS trust if my local one has a long wait?</p>
+              <p className="text-sm text-slate-400 leading-relaxed">Yes — NHS Right to Choose gives you a legal right to be referred to any NHS-contracted provider in England, including NHS-funded independent hospitals, at no cost.</p>
+            </div>
+            <div className="mb-4 p-4 bg-slate-800/40 border border-slate-700/60 rounded-xl">
+              <p className="text-sm font-bold text-slate-100 mb-1.5">How often is this NHS wait time data updated?</p>
+              <p className="text-sm text-slate-400 leading-relaxed">Monthly, in line with NHS England's official RTT (Referral to Treatment) statistical release.</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'us-waits' && (
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 leading-tight mb-3">
+              US Specialist Appointment Wait Times by State — 2026
+            </h1>
+            <p className="text-sm text-slate-400 max-w-2xl mb-6">
+              Even with insurance, specialist appointment wait times vary significantly across US states. Below is a full state-by-state breakdown sourced from the AMN Healthcare 2025 Survey of Physician Appointment Wait Times, plus guidance on self-pay alternatives.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+              <div className="p-4 border border-slate-700 rounded-xl bg-slate-900/40">
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Fastest State (Orthopaedics)</p>
+                <p className="text-2xl font-extrabold text-emerald-400">10 days</p>
+                <p className="text-xs text-slate-500 mt-1">Colorado</p>
+              </div>
+              <div className="p-4 border border-slate-700 rounded-xl bg-slate-900/40">
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Slowest State (Orthopaedics)</p>
+                <p className="text-2xl font-extrabold text-red-400">21 days</p>
+                <p className="text-xs text-slate-500 mt-1">Wyoming</p>
+              </div>
+              <div className="p-4 border border-slate-700 rounded-xl bg-slate-900/40">
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-1">National Average (all specialties)</p>
+                <p className="text-2xl font-extrabold text-cyan-400">~31 days</p>
+                <p className="text-xs text-slate-500 mt-1">AMN Healthcare 2025 survey</p>
+              </div>
+            </div>
+
+            <h2 className="text-xl font-bold text-slate-100 mt-8 mb-3">Why do specialist wait times vary by state?</h2>
+            <p className="text-sm text-slate-300 leading-relaxed mb-4">
+              Physician shortage areas, population density, and the ratio of specialists to patients all drive the gap between states. Rural and lower-density states — Wyoming, Vermont, Montana — consistently show longer waits because there are fewer specialists covering larger geographic areas. Densely populated states with more competing providers, like Colorado, Minnesota and Utah, post the shortest waits.
+            </p>
+            <p className="text-sm text-slate-300 leading-relaxed mb-4">
+              These figures reflect <strong className="text-slate-100">insured</strong> patient appointment waits. Self-pay (cash) patients can sometimes access faster appointments — see our guide on <button onClick={() => { setActiveTab('blogs'); }} className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2">cash pay vs insurance for surgery</button> for the full breakdown.
+            </p>
+
+            <h2 className="text-xl font-bold text-slate-100 mt-8 mb-4">Specialist wait times by state — full table</h2>
+            <p className="text-xs text-slate-500 mb-3">Median wait in days, AMN Healthcare 2025 Survey. Use the search field below to filter by state.</p>
+
+            <div className="relative mb-4 max-w-md">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input type="text" value={usWaitSearch} onChange={(e) => setUsWaitSearch(e.target.value)}
+                placeholder="Search by state, e.g. California, Texas…"
+                className="w-full pl-9 pr-3 py-2 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder:text-slate-600" />
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-slate-700 mb-8">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-800/80">
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">State</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">Orthopaedics</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">Ophthalmology</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">Gynaecology</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">Cardiology</th>
+                    <th className="text-left px-4 py-2.5 text-xs font-bold text-slate-300 uppercase tracking-wide">Dermatology</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(US_STATE_WAITS)
+                    .filter(([name]) => name.toLowerCase().includes(usWaitSearch.toLowerCase()))
+                    .map(([name, data], i) => (
+                    <tr key={name} className={i % 2 === 0 ? 'bg-slate-900/40' : 'bg-slate-900/10'}>
+                      <td className="px-4 py-2.5 text-slate-200 border-t border-slate-800 font-medium">{name}</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.ortho}d</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.ophth}d</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.gynae}d</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.cardiac}d</td>
+                      <td className="px-4 py-2.5 text-slate-300 border-t border-slate-800">{data.derm}d</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h2 className="text-xl font-bold text-slate-100 mt-8 mb-3">How to get faster specialist access in the US</h2>
+            <ul className="mb-6 space-y-2">
+              <li className="text-sm text-slate-300 leading-relaxed flex gap-2.5"><span className="text-cyan-500 font-bold flex-shrink-0">1.</span><span>Ask about <strong className="text-slate-100">cash-pay / self-pay pricing</strong> — direct-pay surgery centres often see patients faster and can be cheaper than billed insurance rates for shoppable procedures.</span></li>
+              <li className="text-sm text-slate-300 leading-relaxed flex gap-2.5"><span className="text-cyan-500 font-bold flex-shrink-0">2.</span><span>Check ambulatory surgery centres (ASCs), not just hospitals — they typically have shorter waits and lower self-pay prices.</span></li>
+              <li className="text-sm text-slate-300 leading-relaxed flex gap-2.5"><span className="text-cyan-500 font-bold flex-shrink-0">3.</span><span>Use the TreatClever comparison tool to see your state's typical wait next to a self-pay cost estimate for 25+ procedures.</span></li>
+            </ul>
+
+            <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 border border-cyan-700/50 rounded-xl mb-8">
+              <p className="text-sm text-slate-200 mb-3">Want to see your state's exact wait time next to a self-pay cost estimate?</p>
+              <button onClick={() => { setActiveTab('home'); }}
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-cyan-500/30 transition-shadow">
+                Compare your state now →
+              </button>
+            </div>
+
+            <h2 className="text-xl font-bold text-slate-100 mt-8 mb-4">Frequently asked questions</h2>
+            <div className="mb-4 p-4 bg-slate-800/40 border border-slate-700/60 rounded-xl">
+              <p className="text-sm font-bold text-slate-100 mb-1.5">What is the average wait time to see a specialist in the US?</p>
+              <p className="text-sm text-slate-400 leading-relaxed">Around 31 days on average across all specialties and states, according to the AMN Healthcare 2025 survey, ranging from about 10 days in the fastest states to over 20 days in the slowest.</p>
+            </div>
+            <div className="mb-4 p-4 bg-slate-800/40 border border-slate-700/60 rounded-xl">
+              <p className="text-sm font-bold text-slate-100 mb-1.5">Is self-pay faster than using insurance?</p>
+              <p className="text-sm text-slate-400 leading-relaxed">Often, yes. Self-pay patients can sometimes get faster appointments at direct-pay clinics and ambulatory surgery centres, since these providers avoid insurance pre-authorisation delays.</p>
+            </div>
+            <div className="mb-4 p-4 bg-slate-800/40 border border-slate-700/60 rounded-xl">
+              <p className="text-sm font-bold text-slate-100 mb-1.5">How often is this US wait time data updated?</p>
+              <p className="text-sm text-slate-400 leading-relaxed">Annually, in line with the AMN Healthcare Survey of Physician Appointment Wait Times, the most rigorous publicly available dataset of its kind.</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab !== 'home' && activeTab !== 'blogs' && activeTab !== 'uk-waits' && activeTab !== 'us-waits' && (
+          <div className="py-24 text-center text-slate-600 text-sm">
+            {TABS.find(t => t.id === activeTab)?.label} — coming soon
+          </div>
+        )}
+      </main>
+
+      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
+      <footer className="border-t border-slate-800 bg-slate-950/60 mt-20 py-10">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
+            <div>
+              <p className="text-sm font-bold bg-gradient-to-r from-blue-300 to-cyan-300 bg-clip-text text-transparent mb-2">TreatClever</p>
+              <p className="text-xs text-slate-500 leading-relaxed">Compare NHS waiting times against private treatment costs in the UK, and insured wait times against self-pay costs in the US — for 25+ common procedures, updated monthly.</p>
+            </div>
+            <nav aria-label="Popular guides">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Popular Guides</p>
+              <ul className="space-y-2">
+                {BLOG_POSTS.map(post => (
+                  <li key={post.slug}>
+                    <button onClick={() => { setActiveTab('blogs'); openPost(post); }} className="text-xs text-slate-500 hover:text-cyan-400 transition-colors text-left">
+                      {post.title}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <nav aria-label="Quick links">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Links</p>
+              <ul className="space-y-2">
+                <li><button onClick={() => setActiveTab('home')} className="text-xs text-slate-500 hover:text-cyan-400 transition-colors">Compare NHS vs Private Costs</button></li>
+                <li><button onClick={() => setActiveTab('blogs')} className="text-xs text-slate-500 hover:text-cyan-400 transition-colors">Health Blogs</button></li>
+              </ul>
+            </nav>
+          </div>
+          <p className="text-xs text-slate-500 pt-4 border-t border-slate-800">Always verify costs with your local provider before making decisions. Information only — not medical, legal or financial advice.</p>
+          <p className="text-xs text-slate-700 mt-2">© 2026 TreatClever. All rights reserved.</p>
+        </div>
+      </footer>
+
+      <style>{`
+        @keyframes slideIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .animate-slideIn { animation: slideIn 0.35s ease-out; }
+        .scrollbar-hide { -ms-overflow-style:none; scrollbar-width:none; }
+        .scrollbar-hide::-webkit-scrollbar { display:none; }
+      `}</style>
+    </div>
+  );
+}
+
+
+import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client?deps=react@18.3.1';
+createRoot(document.getElementById('root')).render(React.createElement(App));
+
+  </script>
+</body>
+</html>

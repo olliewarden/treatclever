@@ -219,6 +219,12 @@ function main() {
   // Copy the main app (interactive tool + blog) into dist as the homepage.
   fs.copyFileSync(path.join(__dirname, 'index.html'), path.join(DIST, 'index.html'));
 
+  // Google Search Console verification file
+  const gscFile = path.join(__dirname, 'google2d2bb04d55f6c57f.html');
+  if (fs.existsSync(gscFile)) {
+    fs.copyFileSync(gscFile, path.join(DIST, 'google2d2bb04d55f6c57f.html'));
+  }
+
   const urls = ['/'];
 
   const icbNames = Object.keys(NHS_ICB_RTT);
